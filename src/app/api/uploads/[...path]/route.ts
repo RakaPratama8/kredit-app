@@ -12,7 +12,9 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
   
   // Prevent path traversal
   const uploadsDir = path.join(process.cwd(), "uploads");
-  if (!filePath.startsWith(uploadsDir)) {
+  const resolvedPath = path.resolve(filePath);
+  const resolvedUploadsDir = path.resolve(uploadsDir);
+  if (!resolvedPath.startsWith(resolvedUploadsDir + path.sep) && resolvedPath !== resolvedUploadsDir) {
     return NextResponse.json({ success: false, error: "Forbidden" }, { status: 403 });
   }
 

@@ -2,10 +2,12 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getAuthUser } from "@/lib/auth";
 import { ROLES } from "@/lib/constants";
+import { hasPermission } from "@/lib/rbac";
 
 export async function GET(request: NextRequest) {
   const user = await getAuthUser(request);
   if (!user) return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
+  if (!hasPermission(user.role, "monitoring:read")) return NextResponse.json({ success: false, error: "Forbidden" }, { status: 403 });
 
   const { searchParams } = new URL(request.url);
   const search = searchParams.get("search") || "";

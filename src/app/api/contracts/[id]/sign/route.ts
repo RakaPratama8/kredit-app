@@ -2,10 +2,12 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getAuthUser } from "@/lib/auth";
 import { ROLES } from "@/lib/constants";
+import { hasPermission } from "@/lib/rbac";
 
 export async function POST(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const user = await getAuthUser(request);
   if (!user) return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
+  if (!hasPermission(user.role, "contract:approve")) return NextResponse.json({ success: false, error: "Forbidden" }, { status: 403 });
 
   const { id } = await params;
   const contract = await prisma.contract.findUnique({ where: { id }, include: { application: true } });

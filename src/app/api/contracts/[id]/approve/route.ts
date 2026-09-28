@@ -6,7 +6,7 @@ import { ROLES } from "@/lib/constants";
 export async function POST(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const user = await getAuthUser(request);
   if (!user) return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
-  if (user.role !== ROLES.ATASAN_MARKETING && user.role !== ROLES.ADMIN_BACKOFFICE && user.role !== ROLES.MARKETING) {
+  if (user.role !== ROLES.ATASAN_MARKETING && user.role !== ROLES.ADMIN_BACKOFFICE) {
     return NextResponse.json({ success: false, error: "Forbidden" }, { status: 403 });
   }
 
