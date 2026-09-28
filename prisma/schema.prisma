@@ -1,0 +1,143 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id @default(cuid())
+  name      String
+  email     String   @unique
+  password  String
+  role      String
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  createdApplications   CreditApplication[]        @relation("CreatedBy")
+  assignedApplications  CreditApplication[]        @relation("AssignedMarketing")
+  approvalHistories     ApprovalHistory[]
+  statusHistories       ApplicationStatusHistory[]
+  uploadedDocuments     ApplicationDocument[]
+}
+
+model Customer {
+  id             String   @id @default(cuid())
+  nik            String   @unique
+  name           String
+  placeOfBirth   String
+  dateOfBirth    DateTime
+  maritalStatus  String
+  spouseName     String?
+  address        String
+  phone          String
+  email          String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  applications CreditApplication[]
+}
+
+model CreditApplication {
+  id                  String   @id @default(cuid())
+  applicationNumber   String   @unique
+  customerId          String
+  createdById         String
+  assignedMarketingId String?
+  status              String   @default("DRAFT")
+
+  dealerName          String   @default("")
+  vehicleBrand        String   @default("")
+  vehicleModel        String   @default("")
+  vehicleType         String   @default("")
+  vehicleYear         Int      @default(2024)
+  vehicleColor        String   @default("")
+  vehiclePrice        Float    @default(0)
+
+  downPayment         Float    @default(0)
+  loanAmount          Float    @default(0)
+  tenorMonths         Int      @default(12)
+  monthlyInstallment  Float    @default(0)
+  insurance           Float    @default(0)
+  totalLoanCost       Float    @default(0)
+
+  submittedAt         DateTime?
+  approvedAt          DateTime?
+  rejectedAt          DateTime?
+  rejectionReason     String?
+
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+
+  customer            Customer             @relation(fields: [customerId], references: [id])
+  createdBy           User                 @relation("CreatedBy", fields: [createdById], references: [id])
+  assignedMarketing   User?                @relation("AssignedMarketing", fields: [assignedMarketingId], references: [id])
+  documents           ApplicationDocument[]
+  approvalHistories   ApprovalHistory[]
+  statusHistories     ApplicationStatusHistory[]
+  contract            Contract?
+}
+
+model ApplicationDocument {
+  id            String   @id @default(cuid())
+  applicationId String
+  documentType  String
+  fileName      String
+  storageName   String
+  filePath      String
+  mimeType      String
+  fileSize      Int
+  status        String   @default("PENDING")
+  uploadedById  String
+  uploadedAt    DateTime @default(now())
+  notes         String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  application   CreditApplication @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  uploadedBy    User              @relation(fields: [uploadedById], references: [id])
+}
+
+model Contract {
+  id              String   @id @default(cuid())
+  applicationId   String   @unique
+  documentNumber  String   @unique
+  documentType    String   @default("CONTRACT")
+  filePath        String?
+  fileName        String?
+  status          String   @default("GENERATED")
+  generatedAt     DateTime @default(now())
+  approvedAt      DateTime?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  application     CreditApplication @relation(fields: [applicationId], references: [id])
+}
+
+model ApprovalHistory {
+  id            String   @id @default(cuid())
+  applicationId String
+  approverId    String
+  action        String
+  note          String?
+  createdAt     DateTime @default(now())
+
+  application   CreditApplication @relation(fields: [applicationId], references: [id])
+  approver      User              @relation(fields: [approverId], references: [id])
+}
+
+model ApplicationStatusHistory {
+  id            String   @id @default(cuid())
+  applicationId String
+  oldStatus     String?
+  newStatus     String
+  changedById   String
+  note          String?
+  createdAt     DateTime @default(now())
+
+  application   CreditApplication @relation(fields: [applicationId], references: [id])
+  changedBy     User              @relation(fields: [changedById], references: [id])
+}
